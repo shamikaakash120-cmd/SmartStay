@@ -1,0 +1,8 @@
+# Build and bytecode directories
+bin/
+out/
+*.class
+
+# Operating System files
+.DS_Store
+Thumbs.db
