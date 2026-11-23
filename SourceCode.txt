@@ -1,0 +1,2188 @@
+==================================================
+FILE: model/E195569Person.java
+==================================================
+package model;
+
+/**
+ * Abstract base class representing a person in the SmartStay system.
+ * Encapsulates common identity and contact details shared across system roles.
+ */
+public abstract class E195569Person {
+    private final String fullName;
+    private final String contactNumber;
+    private final String email;
+
+    /**
+     * Constructs a validated Person instance.
+     *
+     * @param fullName      Full legal name of the person.
+     * @param contactNumber Contact telephone number.
+     * @param email         Contact email address.
+     * @throws IllegalArgumentException if any argument is null or blank.
+     */
+    public E195569Person(String fullName, String contactNumber, String email) {
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("Full name cannot be null or blank.");
+        }
+        if (contactNumber == null || contactNumber.isBlank()) {
+            throw new IllegalArgumentException("Contact number cannot be null or blank.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank.");
+        }
+
+        this.fullName = fullName.trim();
+        this.contactNumber = contactNumber.trim();
+        this.email = email.trim();
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * Abstract method to obtain formatted details specific to the concrete role.
+     *
+     * @return Formatted detail string.
+     */
+    public abstract String getDetails();
+}
+
+==================================================
+FILE: model/E195569Guest.java
+==================================================
+package model;
+
+import java.util.Objects;
+
+/**
+ * Represents a registered hotel guest in the SmartStay system.
+ */
+// Inheritance: E195569Guest extends E195569Person, inheriting core contact and identity attributes
+public class E195569Guest extends E195569Person {
+    private final String nicOrPassport;
+
+    /**
+     * Constructs a validated guest entity.
+     *
+     * @param nicOrPassport National Identity Card (NIC) or Passport number.
+     * @param fullName      Full legal name.
+     * @param contactNumber Contact telephone number.
+     * @param email         Contact email address.
+     * @throws IllegalArgumentException if any argument is null or blank.
+     */
+    public E195569Guest(String nicOrPassport, String fullName, String contactNumber, String email) {
+        super(fullName, contactNumber, email);
+        if (nicOrPassport == null || nicOrPassport.isBlank()) {
+            throw new IllegalArgumentException("NIC or Passport number cannot be null or blank.");
+        }
+        this.nicOrPassport = nicOrPassport.trim();
+    }
+
+    public String getNicOrPassport() {
+        return nicOrPassport;
+    }
+
+    // Polymorphism: Dynamic method dispatch overrides abstract getDetails() from E195569Person
+    @Override
+    public String getDetails() {
+        return String.format("Guest [NIC/Passport: %s, Name: %s, Contact: %s, Email: %s]",
+                nicOrPassport, getFullName(), getContactNumber(), getEmail());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        E195569Guest guest = (E195569Guest) o;
+        return Objects.equals(nicOrPassport, guest.nicOrPassport);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nicOrPassport);
+    }
+
+    @Override
+    public String toString() {
+        return getDetails();
+    }
+}
+
+==================================================
+FILE: model/E195569Admin.java
+==================================================
+package model;
+
+import java.util.Objects;
+
+/**
+ * Represents a hotel administrator account in the SmartStay system.
+ * Contains authentication credentials and administrative identity details.
+ */
+// Inheritance: E195569Admin extends E195569Person to reuse personal contact and name attributes
+public class E195569Admin extends E195569Person {
+    private final String adminId;
+    private final String pin;
+
+    /**
+     * Constructs a validated admin account.
+     *
+     * @param adminId       Unique identifier for the administrator.
+     * @param pin           Security PIN for login authentication.
+     * @param fullName      Administrator's full name.
+     * @param contactNumber Contact telephone number.
+     * @param email         Contact email address.
+     * @throws IllegalArgumentException if any argument is null or blank.
+     */
+    public E195569Admin(String adminId, String pin, String fullName, String contactNumber, String email) {
+        super(fullName, contactNumber, email);
+        if (adminId == null || adminId.isBlank()) {
+            throw new IllegalArgumentException("Admin ID cannot be null or blank.");
+        }
+        if (pin == null || pin.isBlank()) {
+            throw new IllegalArgumentException("PIN cannot be null or blank.");
+        }
+        this.adminId = adminId.trim();
+        this.pin = pin.trim();
+    }
+
+    public String getAdminId() {
+        return adminId;
+    }
+
+    public String getPin() {
+        return pin;
+    }
+
+    /**
+     * Authenticates the administrator by verifying the provided PIN.
+     *
+     * @param inputPin PIN to test against stored credential.
+     * @return true if PIN matches exactly, false otherwise.
+     */
+    public boolean login(String inputPin) {
+        return this.pin.equals(inputPin);
+    }
+
+    // Polymorphism: Dynamic method dispatch overrides abstract getDetails() from E195569Person
+    @Override
+    public String getDetails() {
+        return String.format("Admin [ID: %s, Name: %s, Contact: %s, Email: %s]",
+                adminId, getFullName(), getContactNumber(), getEmail());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        E195569Admin admin = (E195569Admin) o;
+        return Objects.equals(adminId, admin.adminId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(adminId);
+    }
+
+    @Override
+    public String toString() {
+        return getDetails();
+    }
+}
+
+==================================================
+FILE: model/E195569Room.java
+==================================================
+package model;
+
+import java.util.Objects;
+
+/**
+ * Represents a hotel room in the SmartStay system.
+ * Encapsulates room identification, category, bed layout, and operational status.
+ */
+public class E195569Room {
+    private final String roomId;
+    private E195569RoomType roomType;
+    private E195569BedType bedType;
+    private E195569RoomStatus status;
+
+    /**
+     * Constructs a Room instance with validated attributes.
+     *
+     * @param roomId   Unique room identifier (e.g., "101", "205").
+     * @param roomType Room category defining rate, breakfast, tax, and capacity.
+     * @param bedType  Bed layout configuration.
+     * @param status   Operational status (AVAILABLE, RESERVED, UNDER_MAINTENANCE).
+     * @throws IllegalArgumentException if roomId is null/blank, or enum references are null.
+     */
+    public E195569Room(String roomId, E195569RoomType roomType, E195569BedType bedType, E195569RoomStatus status) {
+        if (roomId == null || roomId.isBlank()) {
+            throw new IllegalArgumentException("Room ID cannot be null or blank.");
+        }
+        this.roomId = roomId.trim();
+        this.roomType = Objects.requireNonNull(roomType, "Room type cannot be null.");
+        this.bedType = Objects.requireNonNull(bedType, "Bed type cannot be null.");
+        this.status = Objects.requireNonNull(status, "Room status cannot be null.");
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public E195569RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(E195569RoomType roomType) {
+        this.roomType = Objects.requireNonNull(roomType, "Room type cannot be null.");
+    }
+
+    public E195569BedType getBedType() {
+        return bedType;
+    }
+
+    public void setBedType(E195569BedType bedType) {
+        this.bedType = Objects.requireNonNull(bedType, "Bed type cannot be null.");
+    }
+
+    public E195569RoomStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * Checks if the room is currently available for guest booking.
+     *
+     * @return true if room status is AVAILABLE, false otherwise.
+     */
+    public boolean isAvailable() {
+        return this.status == E195569RoomStatus.AVAILABLE;
+    }
+
+    /**
+     * Returns the daily rate of the room by delegating to its room type.
+     *
+     * @return Daily room charge in LKR.
+     */
+    public double getDailyRate() {
+        return roomType.getDailyRate();
+    }
+
+    /**
+     * Updates the operational state of the room.
+     *
+     * @param status The new status to transition to.
+     */
+    public void setStatus(E195569RoomStatus status) {
+        this.status = Objects.requireNonNull(status, "Room status cannot be null.");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        E195569Room room = (E195569Room) o;
+        return Objects.equals(roomId, room.roomId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(roomId);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("| %-8s | %-14s | %-12s | %-18s | LKR %,9.2f |",
+                roomId, roomType.getDisplayName(), bedType.getDisplayName(),
+                status.getDisplayName(), getDailyRate());
+    }
+}
+
+==================================================
+FILE: model/E195569Booking.java
+==================================================
+package model;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
+
+/**
+ * Represents a reservation record in the SmartStay system.
+ * Connects the guest, assigned room, stay duration, advance payment, and reservation lifecycle state.
+ */
+public class E195569Booking {
+
+    /** Standard refundable booking advance payment required at reservation (LKR 10,000). */
+    private static final double STANDARD_ADVANCE = 10000.0;
+
+    /** Window in hours prior to check-in midnight when cancellation/modification is blocked. */
+    private static final int CANCELLATION_DEADLINE_HOURS = 24;
+
+    /** Minimum required number of guests for any valid booking. */
+    private static final int MIN_GUESTS = 1;
+
+    private final String bookingId;
+    private final E195569Guest guest;
+    private final E195569Room room;
+    private final LocalDate checkInDate;
+    private final LocalDate checkOutDate;
+    private final int numberOfGuests;
+    private final double advancePaid;
+    private E195569BookingStatus bookingStatus;
+
+    /**
+     * Constructs a validated booking instance with standard advance payment of LKR 10,000.
+     *
+     * @param bookingId      Unique booking identifier (e.g., "BK-1001").
+     * @param guest          Registered guest holding the reservation.
+     * @param room           Allocated room for the stay.
+     * @param checkInDate    Start date of the reservation.
+     * @param checkOutDate   End date of the reservation.
+     * @param numberOfGuests Number of occupants staying in the room.
+     * @throws IllegalArgumentException if arguments are null/blank, guests < 1, or check-out is not after check-in.
+     */
+    public E195569Booking(String bookingId, E195569Guest guest, E195569Room room,
+                          LocalDate checkInDate, LocalDate checkOutDate, int numberOfGuests) {
+        this(bookingId, guest, room, checkInDate, checkOutDate, numberOfGuests, E195569BookingStatus.CONFIRMED);
+    }
+
+    /**
+     * Overloaded constructor supporting initial status specification.
+     */
+    public E195569Booking(String bookingId, E195569Guest guest, E195569Room room,
+                          LocalDate checkInDate, LocalDate checkOutDate, int numberOfGuests,
+                          E195569BookingStatus bookingStatus) {
+        if (bookingId == null || bookingId.isBlank()) {
+            throw new IllegalArgumentException("Booking ID cannot be null or blank.");
+        }
+        this.guest = Objects.requireNonNull(guest, "Guest cannot be null.");
+        this.room = Objects.requireNonNull(room, "Room cannot be null.");
+        this.checkInDate = Objects.requireNonNull(checkInDate, "Check-in date cannot be null.");
+        this.checkOutDate = Objects.requireNonNull(checkOutDate, "Check-out date cannot be null.");
+
+        if (!checkOutDate.isAfter(checkInDate)) {
+            throw new IllegalArgumentException("Check-out date (" + checkOutDate + ") must be after check-in date (" + checkInDate + ").");
+        }
+        if (numberOfGuests < MIN_GUESTS) {
+            throw new IllegalArgumentException("Number of guests must be at least " + MIN_GUESTS + ", but received " + numberOfGuests + ".");
+        }
+
+        this.bookingId = bookingId.trim();
+        this.numberOfGuests = numberOfGuests;
+        this.advancePaid = STANDARD_ADVANCE;
+        this.bookingStatus = Objects.requireNonNull(bookingStatus, "Booking status cannot be null.");
+    }
+
+    public String getBookingId() {
+        return bookingId;
+    }
+
+    public E195569Guest getGuest() {
+        return guest;
+    }
+
+    public E195569Room getRoom() {
+        return room;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public int getNumberOfGuests() {
+        return numberOfGuests;
+    }
+
+    public double getAdvancePaid() {
+        return advancePaid;
+    }
+
+    public E195569BookingStatus getBookingStatus() {
+        return bookingStatus;
+    }
+
+    /**
+     * Calculates the total duration of the stay in nights.
+     *
+     * @return Number of nights between check-in and check-out dates.
+     */
+    public long getNights() {
+        return ChronoUnit.DAYS.between(checkInDate, checkOutDate);
+    }
+
+    /**
+     * Determines whether the reservation can be modified or cancelled based on business rules.
+     * Allowed only if status is CONFIRMED and more than 24 hours remain before check-in at 00:00.
+     *
+     * @param now Current date and time reference.
+     * @return true if cancellation or modification is permitted; false otherwise.
+     */
+    public boolean canModifyOrCancel(LocalDateTime now) {
+        if (bookingStatus != E195569BookingStatus.CONFIRMED) {
+            return false;
+        }
+        LocalDateTime checkInMidnight = checkInDate.atStartOfDay();
+        return now.isBefore(checkInMidnight.minusHours(CANCELLATION_DEADLINE_HOURS));
+    }
+
+    /**
+     * Checks if a candidate date range conflicts with this booking's date interval.
+     *
+     * @param in  Candidate check-in date.
+     * @param out Candidate check-out date.
+     * @return true if the date ranges overlap, false otherwise.
+     */
+    // Algorithm: Interval Overlap Detection - two half-open intervals [in, out) and [checkInDate, checkOutDate) overlap if in < checkOutDate && out > checkInDate
+    public boolean overlaps(LocalDate in, LocalDate out) {
+        if (in == null || out == null || !out.isAfter(in)) {
+            throw new IllegalArgumentException("Invalid date range supplied for overlap check.");
+        }
+        return in.isBefore(checkOutDate) && out.isAfter(checkInDate);
+    }
+
+    /**
+     * Transitions the reservation status to CANCELLED.
+     */
+    public void cancel() {
+        this.bookingStatus = E195569BookingStatus.CANCELLED;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        E195569Booking that = (E195569Booking) o;
+        return Objects.equals(bookingId, that.bookingId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(bookingId);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("| %-9s | %-7s | %-16s | %-10s | %-10s | %2d night(s) | %2d guest(s) | LKR %,9.2f | %-9s |",
+                bookingId, room.getRoomId(), guest.getFullName(), checkInDate, checkOutDate,
+                getNights(), numberOfGuests, advancePaid, bookingStatus.getDisplayName());
+    }
+}
+
+==================================================
+FILE: model/E195569Invoice.java
+==================================================
+package model;
+
+import java.time.LocalDate;
+import java.util.Objects;
+
+/**
+ * Represents an itemized financial invoice for a hotel reservation.
+ * Encapsulates stay parameters, guest/room associations, and itemized billing components.
+ */
+public class E195569Invoice {
+    private static final int MIN_NIGHTS = 1;
+    private static final int MIN_GUESTS = 1;
+    private static final double PERCENTAGE_FACTOR = 100.0;
+
+    private final E195569Guest guest;
+    private final E195569Room room;
+    private final LocalDate checkInDate;
+    private final LocalDate checkOutDate;
+    private final long nights;
+    private final int numberOfGuests;
+    private final boolean breakfastIncluded;
+    private final double baseCharge;
+    private final double extraGuestCharge;
+    private final double discount;
+    private final double tax;
+    private final double advanceDeducted;
+    private final double finalAmount;
+
+    public E195569Invoice(E195569Guest guest, E195569Room room, LocalDate checkInDate, LocalDate checkOutDate,
+                          long nights, int numberOfGuests, boolean breakfastIncluded, double baseCharge,
+                          double extraGuestCharge, double discount, double tax, double advanceDeducted, double finalAmount) {
+        this.guest = Objects.requireNonNull(guest, "Guest cannot be null.");
+        this.room = Objects.requireNonNull(room, "Room cannot be null.");
+        this.checkInDate = Objects.requireNonNull(checkInDate, "Check-in date cannot be null.");
+        this.checkOutDate = Objects.requireNonNull(checkOutDate, "Check-out date cannot be null.");
+        if (nights < MIN_NIGHTS) {
+            throw new IllegalArgumentException("Nights must be at least " + MIN_NIGHTS + ".");
+        }
+        if (numberOfGuests < MIN_GUESTS) {
+            throw new IllegalArgumentException("Number of guests must be at least " + MIN_GUESTS + ".");
+        }
+
+        this.nights = nights;
+        this.numberOfGuests = numberOfGuests;
+        this.breakfastIncluded = breakfastIncluded;
+        this.baseCharge = baseCharge;
+        this.extraGuestCharge = extraGuestCharge;
+        this.discount = discount;
+        this.tax = tax;
+        this.advanceDeducted = advanceDeducted;
+        this.finalAmount = finalAmount;
+    }
+
+    public E195569Guest getGuest() {
+        return guest;
+    }
+
+    public E195569Room getRoom() {
+        return room;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public long getNights() {
+        return nights;
+    }
+
+    public int getNumberOfGuests() {
+        return numberOfGuests;
+    }
+
+    public boolean isBreakfastIncluded() {
+        return breakfastIncluded;
+    }
+
+    public double getBaseCharge() {
+        return baseCharge;
+    }
+
+    public double getExtraGuestCharge() {
+        return extraGuestCharge;
+    }
+
+    public double getDiscount() {
+        return discount;
+    }
+
+    public double getTax() {
+        return tax;
+    }
+
+    public double getAdvanceDeducted() {
+        return advanceDeducted;
+    }
+
+    public double getFinalAmount() {
+        return finalAmount;
+    }
+
+    /**
+     * Prints a neatly formatted invoice displaying all parameters and billing components.
+     * Aligns every label colon uniformly and dynamically presents tax rate and guest details.
+     */
+    public void print() {
+        int taxPercentage = (int) Math.round(room.getRoomType().getTaxRate() * PERCENTAGE_FACTOR);
+        String taxLabel = String.format("Tax Added (%d%%)", taxPercentage);
+
+        System.out.println("================================================================================");
+        System.out.println("                      SMARTSTAY HOTEL BOOKING INVOICE                           ");
+        System.out.println("================================================================================");
+        System.out.printf(" %-21s: %s%n", "Room ID", room.getRoomId());
+        System.out.printf(" %-21s: %s%n", "Room Type", room.getRoomType().getDisplayName());
+        System.out.printf(" %-21s: %s%n", "Bed Type", room.getBedType().getDisplayName());
+        System.out.printf(" %-21s: LKR %,.2f%n", "Daily Rate", room.getDailyRate());
+        System.out.printf(" %-21s: %s%n", "Breakfast Included", breakfastIncluded ? "Yes" : "No");
+        System.out.println("--------------------------------------------------------------------------------");
+        System.out.printf(" %-21s: %s%n", "NIC/Passport", guest.getNicOrPassport());
+        System.out.printf(" %-21s: %s%n", "Full Name", guest.getFullName());
+        System.out.printf(" %-21s: %s%n", "Contact", guest.getContactNumber());
+        System.out.printf(" %-21s: %s%n", "Email", guest.getEmail());
+        System.out.printf(" %-21s: %s%n", "Check-In Date", checkInDate);
+        System.out.printf(" %-21s: %s%n", "Check-Out Date", checkOutDate);
+        System.out.printf(" %-21s: %d%n", "Number of Nights", nights);
+        System.out.printf(" %-21s: %d (Base Capacity: %d)%n", "Number of Guests", numberOfGuests, room.getRoomType().getCapacity());
+        System.out.println("--------------------------------------------------------------------------------");
+        System.out.printf(" %-21s: LKR %,12.2f%n", "Base Room Charge", baseCharge);
+        System.out.printf(" %-21s: LKR %,12.2f%n", "Extra Guest Charges", extraGuestCharge);
+        System.out.printf(" %-21s: -LKR %,11.2f%n", "Discount Applied", discount);
+        System.out.printf(" %-21s: +LKR %,11.2f%n", taxLabel, tax);
+        System.out.printf(" %-21s: -LKR %,11.2f%n", "Booking Advance Paid", advanceDeducted);
+        System.out.println("================================================================================");
+        System.out.printf(" %-21s: LKR %,12.2f%n", "Final Payable Amount", finalAmount);
+        System.out.println("================================================================================");
+    }
+}
+
+==================================================
+FILE: model/E195569RoomType.java
+==================================================
+package model;
+
+/**
+ * Enumeration representing predefined room types and their fixed business specifications.
+ * Enforces daily rate, breakfast eligibility, extra guest surcharge, tax rate, and standard capacity.
+ */
+public enum E195569RoomType {
+    STANDARD("Standard Room", 6000.0, false, 1000.0, 0.10, 2),
+    DELUXE("Deluxe Room", 9000.0, true, 1500.0, 0.12, 3),
+    SUITE("Suite", 14000.0, true, 2000.0, 0.15, 4),
+    FAMILY_SUITE("Family Suite", 18000.0, true, 2500.0, 0.15, 6);
+
+    private final String displayName;
+    private final double dailyRate;
+    private final boolean breakfastIncluded;
+    private final double extraGuestCharge;
+    private final double taxRate;
+    private final int capacity;
+
+    E195569RoomType(String displayName, double dailyRate, boolean breakfastIncluded,
+                    double extraGuestCharge, double taxRate, int capacity) {
+        this.displayName = displayName;
+        this.dailyRate = dailyRate;
+        this.breakfastIncluded = breakfastIncluded;
+        this.extraGuestCharge = extraGuestCharge;
+        this.taxRate = taxRate;
+        this.capacity = capacity;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public double getDailyRate() {
+        return dailyRate;
+    }
+
+    public boolean isBreakfastIncluded() {
+        return breakfastIncluded;
+    }
+
+    public double getExtraGuestCharge() {
+        return extraGuestCharge;
+    }
+
+    public double getTaxRate() {
+        return taxRate;
+    }
+
+    public int getCapacity() {
+        return capacity;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s (LKR %,.2f/night, Capacity: %d, Breakfast: %s)",
+                displayName, dailyRate, capacity, breakfastIncluded ? "Included" : "None");
+    }
+}
+
+==================================================
+FILE: model/E195569BedType.java
+==================================================
+package model;
+
+/**
+ * Enumeration representing the available bed configurations for hotel rooms.
+ */
+public enum E195569BedType {
+    SINGLE("Single Bed"),
+    DOUBLE("Double Bed"),
+    QUEEN("Queen Bed"),
+    KING("King Bed");
+
+    private final String displayName;
+
+    E195569BedType(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
+}
+
+==================================================
+FILE: model/E195569RoomStatus.java
+==================================================
+package model;
+
+/**
+ * Enumeration representing the operational status of a hotel room.
+ */
+public enum E195569RoomStatus {
+    AVAILABLE("Available"),
+    RESERVED("Reserved"),
+    UNDER_MAINTENANCE("Under Maintenance");
+
+    private final String displayName;
+
+    E195569RoomStatus(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
+}
+
+==================================================
+FILE: model/E195569BookingStatus.java
+==================================================
+package model;
+
+/**
+ * Enumeration representing the valid lifecycle states of a hotel reservation.
+ * Restricted to CONFIRMED and CANCELLED as per coursework rules.
+ */
+public enum E195569BookingStatus {
+    CONFIRMED("Confirmed"),
+    CANCELLED("Cancelled");
+
+    private final String displayName;
+
+    E195569BookingStatus(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
+}
+
+==================================================
+FILE: service/E195569RoomService.java
+==================================================
+package service;
+
+import exception.E195569BookingException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import model.E195569BedType;
+import model.E195569Room;
+import model.E195569RoomStatus;
+import model.E195569RoomType;
+
+/**
+ * Service managing hotel room inventory with in-memory HashMap storage.
+ */
+public class E195569RoomService {
+
+    // Data Structure: HashMap for O(1) average-time room lookups keyed by roomId
+    private final Map<String, E195569Room> rooms = new HashMap<>();
+
+    /**
+     * Adds a new room to the repository, rejecting duplicate IDs.
+     *
+     * @param room The room to add.
+     * @throws E195569BookingException if room is null or roomId already exists.
+     */
+    public void addRoom(E195569Room room) throws E195569BookingException {
+        if (room == null) {
+            throw new E195569BookingException("Cannot add room: Room reference cannot be null.");
+        }
+        String id = room.getRoomId();
+        if (rooms.containsKey(id)) {
+            throw new E195569BookingException("Cannot add room: Room ID '" + id + "' already exists.");
+        }
+        rooms.put(id, room);
+    }
+
+    /**
+     * Updates the category, bed type, and status of an existing room.
+     *
+     * @param roomId   Room identifier.
+     * @param roomType New room category.
+     * @param bedType  New bed layout.
+     * @param status   New operational status.
+     * @throws E195569BookingException if roomId is unknown or any parameter is null.
+     */
+    public void updateRoom(String roomId, E195569RoomType roomType, E195569BedType bedType, E195569RoomStatus status)
+            throws E195569BookingException {
+        E195569Room room = findById(roomId);
+        if (roomType == null || bedType == null || status == null) {
+            throw new E195569BookingException("Room attributes (roomType, bedType, status) cannot be null.");
+        }
+        room.setRoomType(roomType);
+        room.setBedType(bedType);
+        room.setStatus(status);
+    }
+
+    /**
+     * Removes an existing room from the inventory.
+     *
+     * @param roomId Room identifier.
+     * @throws E195569BookingException if roomId is not found.
+     */
+    public void removeRoom(String roomId) throws E195569BookingException {
+        if (roomId == null || !rooms.containsKey(roomId.trim())) {
+            throw new E195569BookingException("Cannot remove room: Room ID '" + roomId + "' not found.");
+        }
+        rooms.remove(roomId.trim());
+    }
+
+    /**
+     * Finds a room by its unique room ID.
+     *
+     * @param roomId Room identifier.
+     * @return Found room instance.
+     * @throws E195569BookingException if roomId does not exist.
+     */
+    public E195569Room findById(String roomId) throws E195569BookingException {
+        if (roomId == null || !rooms.containsKey(roomId.trim())) {
+            throw new E195569BookingException("Room with ID '" + roomId + "' was not found.");
+        }
+        return rooms.get(roomId.trim());
+    }
+
+    /**
+     * Returns an unmodifiable list of all rooms sorted by roomId.
+     *
+     * @return List of all rooms sorted naturally by roomId.
+     */
+    // Algorithm: Comparison-based sorting on roomId
+    public List<E195569Room> getAllRooms() {
+        List<E195569Room> sortedList = new ArrayList<>(rooms.values());
+        sortedList.sort(Comparator.comparing(E195569Room::getRoomId));
+        return sortedList;
+    }
+
+    /**
+     * Updates the operational status of an existing room.
+     *
+     * @param roomId Room identifier.
+     * @param status New status to apply.
+     * @throws E195569BookingException if room does not exist or status is null.
+     */
+    public void updateStatus(String roomId, E195569RoomStatus status) throws E195569BookingException {
+        if (status == null) {
+            throw new E195569BookingException("Room status cannot be null.");
+        }
+        E195569Room room = findById(roomId);
+        room.setStatus(status);
+    }
+
+    /**
+     * Searches and returns all rooms of a given type whose status is AVAILABLE.
+     *
+     * @param type Desired room category.
+     * @return List of matching available rooms.
+     */
+    // Algorithm: Linear Filter matching roomType and AVAILABLE status
+    public List<E195569Room> searchAvailable(E195569RoomType type) {
+        List<E195569Room> result = new ArrayList<>();
+        for (E195569Room r : rooms.values()) {
+            if (r.getRoomType() == type && r.isAvailable()) {
+                result.add(r);
+            }
+        }
+        result.sort(Comparator.comparing(E195569Room::getRoomId));
+        return result;
+    }
+}
+
+==================================================
+FILE: service/E195569GuestService.java
+==================================================
+package service;
+
+import exception.E195569BookingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import model.E195569Guest;
+
+/**
+ * Service managing customer and guest registrations with in-memory HashMap storage.
+ */
+public class E195569GuestService {
+
+    private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z\\s]+$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{9,15}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+
+    // Data Structure: HashMap for O(1) average-time guest retrieval keyed by NIC/Passport
+    private final Map<String, E195569Guest> guests = new HashMap<>();
+
+    /**
+     * Registers a new guest after thoroughly validating personal details and checking duplicates.
+     *
+     * @param nicOrPassport National Identity Card (NIC) or Passport number.
+     * @param fullName      Full legal name containing letters and spaces only.
+     * @param contactNumber Contact phone number (9 to 15 digits with optional leading +).
+     * @param email         Valid email address matching standard format.
+     * @return Newly registered and stored E195569Guest instance.
+     * @throws E195569BookingException if any field is blank, malformed, or already registered.
+     */
+    public E195569Guest registerGuest(String nicOrPassport, String fullName, String contactNumber, String email)
+            throws E195569BookingException {
+        if (nicOrPassport == null || nicOrPassport.trim().isBlank()) {
+            throw new E195569BookingException("NIC/Passport number cannot be blank.");
+        }
+        if (fullName == null || fullName.trim().isBlank()) {
+            throw new E195569BookingException("Full name cannot be blank.");
+        }
+        if (contactNumber == null || contactNumber.trim().isBlank()) {
+            throw new E195569BookingException("Contact number cannot be blank.");
+        }
+        if (email == null || email.trim().isBlank()) {
+            throw new E195569BookingException("Email address cannot be blank.");
+        }
+
+        String trimmedNic = nicOrPassport.trim();
+        String trimmedName = fullName.trim();
+        String trimmedPhone = contactNumber.trim();
+        String trimmedEmail = email.trim();
+
+        if (!NAME_PATTERN.matcher(trimmedName).matches()) {
+            throw new E195569BookingException("Invalid name '" + trimmedName + "': Name must contain only letters and spaces.");
+        }
+        if (!PHONE_PATTERN.matcher(trimmedPhone).matches()) {
+            throw new E195569BookingException("Invalid contact number '" + trimmedPhone + "': Must contain 9 to 15 digits with an optional leading '+'.");
+        }
+        if (!EMAIL_PATTERN.matcher(trimmedEmail).matches()) {
+            throw new E195569BookingException("Invalid email address '" + trimmedEmail + "': Does not match standard email pattern.");
+        }
+        if (guests.containsKey(trimmedNic)) {
+            throw new E195569BookingException("Registration failed: Guest with NIC/Passport '" + trimmedNic + "' is already registered.");
+        }
+
+        E195569Guest guest = new E195569Guest(trimmedNic, trimmedName, trimmedPhone, trimmedEmail);
+        guests.put(trimmedNic, guest);
+        return guest;
+    }
+
+    /**
+     * Overloaded convenience method for registering a guest instance.
+     */
+    public void registerGuest(E195569Guest guest) throws E195569BookingException {
+        if (guest == null) {
+            throw new E195569BookingException("Guest reference cannot be null.");
+        }
+        registerGuest(guest.getNicOrPassport(), guest.getFullName(), guest.getContactNumber(), guest.getEmail());
+    }
+
+    /**
+     * Finds a registered guest by NIC or Passport number.
+     *
+     * @param nicOrPassport National identification string.
+     * @return Found E195569Guest instance.
+     * @throws E195569BookingException if guest does not exist.
+     */
+    public E195569Guest findByNic(String nicOrPassport) throws E195569BookingException {
+        if (nicOrPassport == null || !guests.containsKey(nicOrPassport.trim())) {
+            throw new E195569BookingException("Guest with NIC/Passport '" + nicOrPassport + "' was not found.");
+        }
+        return guests.get(nicOrPassport.trim());
+    }
+
+    /**
+     * Returns an unmodifiable list of all registered guests.
+     */
+    public List<E195569Guest> getAllGuests() {
+        return Collections.unmodifiableList(new ArrayList<>(guests.values()));
+    }
+}
+
+==================================================
+FILE: service/E195569BookingService.java
+==================================================
+package service;
+
+import exception.E195569BookingException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import model.E195569Booking;
+import model.E195569BookingStatus;
+import model.E195569Guest;
+import model.E195569Invoice;
+import model.E195569Room;
+import model.E195569RoomStatus;
+import model.E195569RoomType;
+
+/**
+ * Service managing reservation lifecycles, availability, searching, and invoice generation.
+ */
+public class E195569BookingService {
+
+    /** Minimum lead time in days required between booking creation and check-in date. */
+    private static final int MIN_LEAD_TIME_DAYS = 2;
+
+    /** Minimum required number of guests for any valid booking. */
+    private static final int MIN_GUESTS = 1;
+
+    // Data Structure: ArrayList holding the in-memory sequence of all booking records
+    private final List<E195569Booking> bookings = new ArrayList<>();
+
+    private final E195569RoomService roomService;
+    private final E195569GuestService guestService;
+    private final E195569InvoiceCalculator invoiceCalculator;
+    private int bookingCounter = 1;
+
+    public E195569BookingService(E195569RoomService roomService, E195569GuestService guestService,
+                                 E195569InvoiceCalculator invoiceCalculator) {
+        this.roomService = Objects.requireNonNull(roomService, "Room service cannot be null.");
+        this.guestService = Objects.requireNonNull(guestService, "Guest service cannot be null.");
+        this.invoiceCalculator = Objects.requireNonNull(invoiceCalculator, "Invoice calculator cannot be null.");
+    }
+
+    /**
+     * Creates a new booking by locating the first available room of the requested type without overlapping reservations.
+     *
+     * @param nicOrPassport  Guest identifier.
+     * @param roomType       Requested room category.
+     * @param numberOfGuests Number of occupants.
+     * @param checkIn        Reservation start date.
+     * @param checkOut       Reservation end date.
+     * @return Newly created and stored E195569Booking instance.
+     * @throws E195569BookingException if any business rule is violated or no room is free.
+     */
+    // Algorithm: First-fit linear search combined with interval overlap detection
+    public E195569Booking createBooking(String nicOrPassport, E195569RoomType roomType, int numberOfGuests,
+                                        LocalDate checkIn, LocalDate checkOut) throws E195569BookingException {
+        E195569Guest guest = guestService.findByNic(nicOrPassport);
+        if (numberOfGuests < MIN_GUESTS) {
+            throw new E195569BookingException("Number of guests must be at least " + MIN_GUESTS + ", but received " + numberOfGuests + ".");
+        }
+        validateDateRange(checkIn, checkOut);
+        LocalDate earliestAllowed = LocalDate.now().plusDays(MIN_LEAD_TIME_DAYS);
+        if (checkIn.isBefore(earliestAllowed)) {
+            throw new E195569BookingException("Check-in must be at least 2 days after today (" + earliestAllowed + " onwards).");
+        }
+        if (roomType == null) {
+            throw new E195569BookingException("Room type cannot be null.");
+        }
+
+        E195569Room assignedRoom = null;
+        for (E195569Room r : roomService.searchAvailable(roomType)) {
+            if (!hasConflictingBooking(r, checkIn, checkOut)) {
+                assignedRoom = r;
+                break;
+            }
+        }
+
+        if (assignedRoom == null) {
+            throw new E195569BookingException("No available room of type " + roomType.getDisplayName() + " for dates " + checkIn + " to " + checkOut + ".");
+        }
+
+        String bookingId = String.format("BK-%04d", bookingCounter++);
+        E195569Booking booking = new E195569Booking(bookingId, guest, assignedRoom, checkIn, checkOut, numberOfGuests);
+        assignedRoom.setStatus(E195569RoomStatus.RESERVED);
+        bookings.add(booking);
+        return booking;
+    }
+
+    /**
+     * Searches for all rooms of a given type with status AVAILABLE and no overlapping CONFIRMED bookings.
+     *
+     * @param type     Room category.
+     * @param checkIn  Desired check-in date.
+     * @param checkOut Desired check-out date.
+     * @return List of matching available rooms.
+     * @throws E195569BookingException if check-out date is not after check-in date or dates are null.
+     */
+    // Algorithm: Linear filtering with interval overlap conflict detection
+    public List<E195569Room> searchAvailableRooms(E195569RoomType type, LocalDate checkIn, LocalDate checkOut)
+            throws E195569BookingException {
+        validateDateRange(checkIn, checkOut);
+        if (type == null) {
+            throw new E195569BookingException("Room type cannot be null.");
+        }
+
+        List<E195569Room> available = new ArrayList<>();
+        for (E195569Room r : roomService.searchAvailable(type)) {
+            if (!hasConflictingBooking(r, checkIn, checkOut)) {
+                available.add(r);
+            }
+        }
+        return Collections.unmodifiableList(available);
+    }
+
+    /**
+     * Cancels an existing booking if outside the 24-hour check-in window.
+     *
+     * @param bookingId Booking identifier.
+     * @return Cancelled booking instance.
+     * @throws E195569BookingException if not found or within 24 hours of check-in at 00:00.
+     */
+    // Algorithm: Linear search for target booking and state transition
+    public E195569Booking cancelBooking(String bookingId) throws E195569BookingException {
+        E195569Booking booking = searchByBookingId(bookingId);
+        if (!booking.canModifyOrCancel(LocalDateTime.now())) {
+            throw new E195569BookingException("Cancellation rejected: Cannot cancel within 24 hours of check-in at 00:00 (Rule: >24h required).");
+        }
+
+        booking.cancel();
+        booking.getRoom().setStatus(E195569RoomStatus.AVAILABLE);
+        return booking;
+    }
+
+    /**
+     * Searches for a booking by its exact ID using linear search.
+     *
+     * @param id Booking identifier.
+     * @return Matching booking.
+     * @throws E195569BookingException if not found.
+     */
+    // Algorithm: Linear Search for exact-key match
+    public E195569Booking searchByBookingId(String id) throws E195569BookingException {
+        if (id == null || id.isBlank()) {
+            throw new E195569BookingException("Booking ID cannot be blank.");
+        }
+        for (E195569Booking b : bookings) {
+            if (b.getBookingId().equalsIgnoreCase(id.trim())) {
+                return b;
+            }
+        }
+        throw new E195569BookingException("Booking with ID '" + id + "' was not found.");
+    }
+
+    /**
+     * Searches bookings matching guest name partially (case-insensitive).
+     *
+     * @param name Guest name or substring.
+     * @return List of matching bookings.
+     */
+    // Algorithm: Linear Search with case-insensitive partial substring match
+    public List<E195569Booking> searchByGuestName(String name) {
+        if (name == null || name.isBlank()) {
+            return Collections.emptyList();
+        }
+        String query = name.trim().toLowerCase();
+        List<E195569Booking> matching = new ArrayList<>();
+        for (E195569Booking b : bookings) {
+            if (b.getGuest().getFullName().toLowerCase().contains(query)) {
+                matching.add(b);
+            }
+        }
+        return Collections.unmodifiableList(matching);
+    }
+
+    /**
+     * Returns a copy of all bookings sorted chronologically by check-in date.
+     *
+     * @return Sorted copy of bookings list.
+     */
+    // Algorithm: Comparator-based TimSort on checkInDate
+    public List<E195569Booking> viewByCheckInDate() {
+        List<E195569Booking> sorted = new ArrayList<>(bookings);
+        sorted.sort(Comparator.comparing(E195569Booking::getCheckInDate));
+        return Collections.unmodifiableList(sorted);
+    }
+
+    /**
+     * Generates an itemized invoice for the requested booking.
+     *
+     * @param bookingId Booking identifier.
+     * @return E195569Invoice instance computed by E195569InvoiceCalculator.
+     * @throws E195569BookingException if booking is not found.
+     */
+    // Algorithm: Linear search for booking ID followed by direct formula calculation
+    public E195569Invoice generateInvoice(String bookingId) throws E195569BookingException {
+        E195569Booking booking = searchByBookingId(bookingId);
+        return invoiceCalculator.calculate(booking);
+    }
+
+    /**
+     * Helper checking for date collisions on a room against active confirmed bookings.
+     */
+    // Algorithm: Interval Overlap Detection (in < otherOut && out > otherIn)
+    private boolean hasConflictingBooking(E195569Room room, LocalDate in, LocalDate out) {
+        for (E195569Booking b : bookings) {
+            if (b.getRoom().equals(room) && b.getBookingStatus() == E195569BookingStatus.CONFIRMED) {
+                if (b.overlaps(in, out)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validates that dates are non-null and check-out is strictly after check-in.
+     */
+    private void validateDateRange(LocalDate checkIn, LocalDate checkOut) throws E195569BookingException {
+        if (checkIn == null || checkOut == null) {
+            throw new E195569BookingException("Check-in and check-out dates cannot be null.");
+        }
+        if (!checkOut.isAfter(checkIn)) {
+            throw new E195569BookingException("Check-out date (" + checkOut + ") must be after check-in date (" + checkIn + ").");
+        }
+    }
+}
+
+==================================================
+FILE: service/E195569InvoiceCalculator.java
+==================================================
+package service;
+
+import java.util.Objects;
+import model.E195569Booking;
+import model.E195569Invoice;
+import model.E195569Room;
+import model.E195569RoomType;
+
+/**
+ * Service calculating itemized invoice totals for reservations according to coursework rules.
+ */
+public class E195569InvoiceCalculator {
+
+    /** Standard refundable booking advance payment required at reservation. */
+    public static final double ADVANCE = 10000.0;
+
+    /** Discount percentage (12%) applied to base room charge for stays >= 5 nights. */
+    public static final double DISCOUNT_RATE = 0.12;
+
+    /** Minimum stay duration in nights required to qualify for long stay discount. */
+    public static final int DISCOUNT_THRESHOLD_NIGHTS = 5;
+
+    /**
+     * Calculates the itemized invoice for a given booking.
+     * Enforces the exact formula:
+     * - base = dailyRate x nights
+     * - extra = max(0, guests - capacity) x extraGuestCharge x nights
+     * - discount = nights >= 5 ? DISCOUNT_RATE x base : 0
+     * - taxable = base - discount + extra
+     * - tax = taxable x taxRate
+     * - final = taxable + tax - ADVANCE
+     *
+     * @param booking The booking for which to calculate the invoice.
+     * @return Fully populated E195569Invoice instance.
+     */
+    // Algorithm: Direct calculation applying hotel billing rules and tiered long-stay discount
+    public E195569Invoice calculate(E195569Booking booking) {
+        Objects.requireNonNull(booking, "Booking cannot be null.");
+
+        E195569Room room = booking.getRoom();
+        E195569RoomType roomType = room.getRoomType();
+
+        double dailyRate = room.getDailyRate();
+        long nights = booking.getNights();
+        int guests = booking.getNumberOfGuests();
+        int capacity = roomType.getCapacity();
+        double extraGuestCharge = roomType.getExtraGuestCharge();
+        double taxRate = roomType.getTaxRate();
+        boolean breakfastIncluded = roomType.isBreakfastIncluded();
+
+        // Business formula implementation
+        double base = dailyRate * nights;
+        double extra = Math.max(0, guests - capacity) * extraGuestCharge * nights;
+        double discount = nights >= DISCOUNT_THRESHOLD_NIGHTS ? DISCOUNT_RATE * base : 0;
+        double taxable = base - discount + extra;
+        double tax = taxable * taxRate;
+        double finalAmount = taxable + tax - ADVANCE;
+
+        return new E195569Invoice(
+                booking.getGuest(), room, booking.getCheckInDate(), booking.getCheckOutDate(),
+                nights, guests, breakfastIncluded, base, extra, discount, tax, ADVANCE, finalAmount
+        );
+    }
+}
+
+==================================================
+FILE: exception/E195569BookingException.java
+==================================================
+package exception;
+
+/**
+ * Checked exception thrown when a hotel booking or service operation violates business rules.
+ */
+public class E195569BookingException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Constructs an E195569BookingException with a detailed error message.
+     *
+     * @param message Description of the rule violation.
+     */
+    public E195569BookingException(String message) {
+        super(message);
+    }
+}
+
+==================================================
+FILE: util/E195569ConsoleReader.java
+==================================================
+package util;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+import model.E195569BedType;
+import model.E195569RoomType;
+
+/**
+ * Reusable utility class for safe, validated console input parsing.
+ * Uses a single shared Scanner to prevent resource leaks and input stream conflicts.
+ * Re-prompts gracefully on invalid input and never crashes or throws runtime exceptions.
+ */
+public final class E195569ConsoleReader {
+
+    // Shared single Scanner instance across the entire console application
+    private static final Scanner SCANNER = new Scanner(System.in);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{9,15}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+
+    private E195569ConsoleReader() {}
+
+    /**
+     * Reads a non-blank line of text from the console.
+     * Re-prompts continuously until a valid non-empty string is entered.
+     *
+     * @param prompt User instruction prompt.
+     * @return Trimmed non-empty string entered by the user.
+     */
+    public static String readString(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                if (!SCANNER.hasNextLine()) {
+                    return "";
+                }
+                String input = SCANNER.nextLine();
+                if (input != null && !input.trim().isBlank()) {
+                    return input.trim();
+                }
+                System.out.println("  [!] Input cannot be empty. Please try again.");
+            } catch (Exception e) {
+                System.out.println("  [!] Error reading input. Please try again.");
+            }
+        }
+    }
+
+    /**
+     * Reads an integer within a specified inclusive range.
+     * Validates input format and range, re-prompting on invalid values.
+     *
+     * @param prompt User prompt.
+     * @param min    Minimum allowed value (inclusive).
+     * @param max    Maximum allowed value (inclusive).
+     * @return Validated integer within the specified range.
+     */
+    public static int readInt(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                if (!SCANNER.hasNextLine()) {
+                    return min;
+                }
+                String input = SCANNER.nextLine();
+                if (input == null || input.trim().isBlank()) {
+                    System.out.println("  [!] Input cannot be empty. Please enter an integer.");
+                    continue;
+                }
+                int value = Integer.parseInt(input.trim());
+                if (value >= min && value <= max) {
+                    return value;
+                }
+                System.out.printf("  [!] Please enter a number between %d and %d.%n", min, max);
+            } catch (NumberFormatException e) {
+                System.out.println("  [!] Invalid number format. Please enter a valid integer.");
+            } catch (Exception e) {
+                System.out.println("  [!] Error reading input. Please try again.");
+            }
+        }
+    }
+
+    /**
+     * Reads a date in yyyy-MM-dd format with strict validation.
+     * Re-prompts on empty or malformed date inputs.
+     *
+     * @param prompt User prompt.
+     * @return Validated LocalDate instance.
+     */
+    public static LocalDate readDate(String prompt) {
+        while (true) {
+            String displayPrompt;
+            if (prompt.toLowerCase().contains("yyyy-mm-dd")) {
+                displayPrompt = prompt.endsWith(" ") ? prompt : prompt + " ";
+            } else {
+                displayPrompt = prompt.endsWith(": ") ? prompt.substring(0, prompt.length() - 2) + " (yyyy-MM-dd): "
+                        : (prompt.endsWith(":") ? prompt.substring(0, prompt.length() - 1) + " (yyyy-MM-dd): "
+                        : prompt + " (yyyy-MM-dd): ");
+            }
+            System.out.print(displayPrompt);
+            try {
+                if (!SCANNER.hasNextLine()) {
+                    return LocalDate.now();
+                }
+                String input = SCANNER.nextLine();
+                if (input == null || input.trim().isBlank()) {
+                    System.out.println("  [!] Date cannot be empty. Please use yyyy-MM-dd (e.g., 2026-12-01).");
+                    continue;
+                }
+                return LocalDate.parse(input.trim(), DATE_FORMATTER);
+            } catch (DateTimeParseException e) {
+                System.out.println("  [!] Invalid date format. Please use yyyy-MM-dd (e.g., 2026-12-01).");
+            } catch (Exception e) {
+                System.out.println("  [!] Error reading input. Please try again.");
+            }
+        }
+    }
+
+    /**
+     * Displays available room types as numbered choices and returns the chosen enum value.
+     *
+     * @param prompt Descriptive prompt header.
+     * @return Selected E195569RoomType enum value.
+     */
+    public static E195569RoomType readRoomType(String prompt) {
+        System.out.println(prompt);
+        E195569RoomType[] types = E195569RoomType.values();
+        for (int i = 0; i < types.length; i++) {
+            System.out.printf("  [%d] %s%n", (i + 1), types[i].getDisplayName());
+        }
+        int choice = readInt("Select room type (1-" + types.length + "): ", 1, types.length);
+        return types[choice - 1];
+    }
+
+    /**
+     * Displays available bed types as numbered choices and returns the chosen enum value.
+     *
+     * @param prompt Descriptive prompt header.
+     * @return Selected E195569BedType enum value.
+     */
+    public static E195569BedType readBedType(String prompt) {
+        System.out.println(prompt);
+        E195569BedType[] beds = E195569BedType.values();
+        for (int i = 0; i < beds.length; i++) {
+            System.out.printf("  [%d] %s%n", (i + 1), beds[i].getDisplayName());
+        }
+        int choice = readInt("Select bed type (1-" + beds.length + "): ", 1, beds.length);
+        return beds[choice - 1];
+    }
+
+    /**
+     * Reads and validates a contact phone number.
+     *
+     * @param prompt User prompt.
+     * @return Validated phone number string.
+     */
+    public static String readPhoneNumber(String prompt) {
+        while (true) {
+            String phone = readString(prompt);
+            if (PHONE_PATTERN.matcher(phone).matches()) {
+                return phone;
+            }
+            System.out.println("  [!] Invalid phone number (9-15 digits, optional leading +). Please try again.");
+        }
+    }
+
+    /**
+     * Reads and validates an email address according to standard format.
+     *
+     * @param prompt User prompt.
+     * @return Validated email string.
+     */
+    public static String readEmail(String prompt) {
+        while (true) {
+            String email = readString(prompt);
+            if (EMAIL_PATTERN.matcher(email).matches()) {
+                return email;
+            }
+            System.out.println("  [!] Invalid email format (e.g., user@example.com). Please try again.");
+        }
+    }
+
+    /**
+     * Pauses console execution until the user presses Enter.
+     */
+    public static void pause() {
+        System.out.print("\nPress Enter to continue...");
+        try {
+            if (SCANNER.hasNextLine()) {
+                SCANNER.nextLine();
+            }
+        } catch (Exception ignored) {}
+    }
+}
+
+==================================================
+FILE: util/E195569DataSeeder.java
+==================================================
+package util;
+
+import exception.E195569BookingException;
+import java.util.List;
+import model.E195569Admin;
+import model.E195569BedType;
+import model.E195569Guest;
+import model.E195569Room;
+import model.E195569RoomStatus;
+import model.E195569RoomType;
+import service.E195569GuestService;
+import service.E195569RoomService;
+
+/**
+ * Utility responsible for pre-populating realistic demonstration data.
+ * Facilitates coursework demonstration and test execution using only model and service constructors.
+ */
+public final class E195569DataSeeder {
+
+    private E195569DataSeeder() {}
+
+    /**
+     * Seeds initial rooms, guests, and administrator into their respective services/stores.
+     *
+     * @param roomService  Target room management service.
+     * @param guestService Target guest management service.
+     * @param adminStore   List holding administrative accounts.
+     */
+    public static void seed(E195569RoomService roomService, E195569GuestService guestService,
+                            List<E195569Admin> adminStore) {
+        seedRooms(roomService);
+        seedGuests(guestService);
+        seedAdmins(adminStore);
+    }
+
+    /**
+     * Loads 8 sample rooms, two of each type with mixed bed types (IDs R101 to R108).
+     * All seeded rooms start with AVAILABLE status.
+     *
+     * @param roomService Target room service.
+     */
+    private static void seedRooms(E195569RoomService roomService) {
+        if (roomService == null) {
+            return;
+        }
+        try {
+            // Standard Rooms (2)
+            roomService.addRoom(new E195569Room("R101", E195569RoomType.STANDARD, E195569BedType.SINGLE, E195569RoomStatus.AVAILABLE));
+            roomService.addRoom(new E195569Room("R102", E195569RoomType.STANDARD, E195569BedType.DOUBLE, E195569RoomStatus.AVAILABLE));
+
+            // Deluxe Rooms (2)
+            roomService.addRoom(new E195569Room("R103", E195569RoomType.DELUXE, E195569BedType.DOUBLE, E195569RoomStatus.AVAILABLE));
+            roomService.addRoom(new E195569Room("R104", E195569RoomType.DELUXE, E195569BedType.QUEEN, E195569RoomStatus.AVAILABLE));
+
+            // Suite Rooms (2)
+            roomService.addRoom(new E195569Room("R105", E195569RoomType.SUITE, E195569BedType.QUEEN, E195569RoomStatus.AVAILABLE));
+            roomService.addRoom(new E195569Room("R106", E195569RoomType.SUITE, E195569BedType.KING, E195569RoomStatus.AVAILABLE));
+
+            // Family Suite Rooms (2)
+            roomService.addRoom(new E195569Room("R107", E195569RoomType.FAMILY_SUITE, E195569BedType.KING, E195569RoomStatus.AVAILABLE));
+            roomService.addRoom(new E195569Room("R108", E195569RoomType.FAMILY_SUITE, E195569BedType.QUEEN, E195569RoomStatus.AVAILABLE));
+        } catch (E195569BookingException e) {
+            System.err.println("Notice: Failed to seed room: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads 2 sample guests with valid NIC, name, contact number, and email.
+     *
+     * @param guestService Target guest service.
+     */
+    private static void seedGuests(E195569GuestService guestService) {
+        if (guestService == null) {
+            return;
+        }
+        try {
+            guestService.registerGuest(new E195569Guest("200012345678", "Nimal Silva", "+94771234567", "nimal.silva@example.com"));
+            guestService.registerGuest(new E195569Guest("N98765432", "Sarah Jenkins", "+94765432100", "sarah.j@travelworld.com"));
+        } catch (E195569BookingException e) {
+            System.err.println("Notice: Failed to seed guest: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads one Admin account with PIN 1234.
+     *
+     * @param adminStore Target administrator collection.
+     */
+    private static void seedAdmins(List<E195569Admin> adminStore) {
+        if (adminStore != null) {
+            adminStore.add(new E195569Admin("ADM01", "1234", "System Administrator", "+94112345678", "admin@smartstay.lk"));
+        }
+    }
+}
+
+==================================================
+FILE: ui/E195569ConsoleMenu.java
+==================================================
+package ui;
+
+import exception.E195569BookingException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Objects;
+import model.E195569Admin;
+import model.E195569BedType;
+import model.E195569Booking;
+import model.E195569Guest;
+import model.E195569Invoice;
+import model.E195569Room;
+import model.E195569RoomStatus;
+import model.E195569RoomType;
+import service.E195569BookingService;
+import service.E195569GuestService;
+import service.E195569InvoiceCalculator;
+import service.E195569RoomService;
+import util.E195569ConsoleReader;
+
+/**
+ * Console user interface coordinating input and presentation for the SmartStay system.
+ * Delegating all business and domain validation to underlying service components.
+ */
+public class E195569ConsoleMenu {
+
+    private static final String DIVIDER = "--------------------------------------------------------------------------------";
+    private static final String BANNER_BORDER = "================================================================================";
+
+    private static final int MAX_PIN_ATTEMPTS = 3;
+    private static final int MIN_GUESTS = 1;
+    private static final int MAX_GUESTS = 10;
+    private static final int MAIN_MENU_MIN = 1;
+    private static final int MAIN_MENU_MAX = 3;
+    private static final int ADMIN_MENU_MIN = 1;
+    private static final int ADMIN_MENU_MAX = 6;
+    private static final int GUEST_MENU_MIN = 1;
+    private static final int GUEST_MENU_MAX = 8;
+    private static final int SEARCH_CHOICE_MIN = 1;
+    private static final int SEARCH_CHOICE_MAX = 2;
+
+    private final E195569RoomService roomService;
+    private final E195569GuestService guestService;
+    private final E195569BookingService bookingService;
+    private final E195569InvoiceCalculator invoiceCalculator;
+    private final List<E195569Admin> admins;
+
+    /**
+     * Constructs the console menu with all necessary service dependencies and admin store.
+     *
+     * @param roomService       Room inventory management service.
+     * @param guestService      Guest registration and lookup service.
+     * @param bookingService    Reservation lifecycle service.
+     * @param invoiceCalculator Billing and tax calculator.
+     * @param admins            Administrative account repository.
+     */
+    public E195569ConsoleMenu(E195569RoomService roomService, E195569GuestService guestService,
+                              E195569BookingService bookingService, E195569InvoiceCalculator invoiceCalculator,
+                              List<E195569Admin> admins) {
+        this.roomService = Objects.requireNonNull(roomService, "Room service cannot be null.");
+        this.guestService = Objects.requireNonNull(guestService, "Guest service cannot be null.");
+        this.bookingService = Objects.requireNonNull(bookingService, "Booking service cannot be null.");
+        this.invoiceCalculator = invoiceCalculator != null ? invoiceCalculator : new E195569InvoiceCalculator();
+        this.admins = Objects.requireNonNull(admins, "Admin list cannot be null.");
+    }
+
+    /**
+     * Starts the application console loop displaying the main entry banner and root menu.
+     */
+    public void start() {
+        boolean running = true;
+        while (running) {
+            displayMainMenu();
+            int choice = E195569ConsoleReader.readInt("Enter choice (" + MAIN_MENU_MIN + "-" + MAIN_MENU_MAX + "): ",
+                    MAIN_MENU_MIN, MAIN_MENU_MAX);
+            switch (choice) {
+                case 1 -> handleAdminFlow();
+                case 2 -> handleGuestFlow();
+                case 3 -> {
+                    System.out.println("\n" + BANNER_BORDER);
+                    System.out.println("          Thank you for using SmartStay Hotel Booking System. Goodbye!          ");
+                    System.out.println(BANNER_BORDER);
+                    running = false;
+                }
+            }
+        }
+    }
+
+    private void displayMainMenu() {
+        System.out.println(BANNER_BORDER);
+        System.out.println("                        SMARTSTAY HOTEL BOOKING SYSTEM                         ");
+        System.out.println(BANNER_BORDER);
+        System.out.println(" [1] Admin");
+        System.out.println(" [2] Guest");
+        System.out.println(" [3] Exit");
+        System.out.println(DIVIDER);
+    }
+
+    // =========================================================================
+    // ADMINISTRATOR WORKFLOW
+    // =========================================================================
+
+    private void handleAdminFlow() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                              ADMINISTRATOR LOGIN                               ");
+        System.out.println(DIVIDER);
+
+        boolean authenticated = false;
+        E195569Admin loggedInAdmin = null;
+
+        for (int attempt = 1; attempt <= MAX_PIN_ATTEMPTS; attempt++) {
+            String pin = E195569ConsoleReader.readString("Enter Security PIN (Attempt " + attempt + " of " + MAX_PIN_ATTEMPTS + "): ");
+            for (E195569Admin admin : admins) {
+                if (admin.login(pin)) {
+                    authenticated = true;
+                    loggedInAdmin = admin;
+                    break;
+                }
+            }
+            if (authenticated) {
+                break;
+            } else {
+                System.out.println("[ERROR] Invalid PIN entered.");
+                if (attempt < MAX_PIN_ATTEMPTS) {
+                    System.out.println("[ERROR] Remaining attempts: " + (MAX_PIN_ATTEMPTS - attempt));
+                }
+            }
+        }
+
+        if (!authenticated) {
+            System.out.println("\n" + DIVIDER);
+            System.out.println("[ERROR] Maximum PIN attempts (" + MAX_PIN_ATTEMPTS + ") exceeded. Returning to main menu.");
+            System.out.println(DIVIDER);
+            pause();
+            return;
+        }
+
+        System.out.println("\n" + DIVIDER);
+        System.out.println("[SUCCESS] Authentication successful. Welcome, " + loggedInAdmin.getFullName() + "!");
+        System.out.println(DIVIDER);
+        pause();
+
+        boolean inAdmin = true;
+        while (inAdmin) {
+            displayAdminMenu();
+            int choice = E195569ConsoleReader.readInt("Enter selection (" + ADMIN_MENU_MIN + "-" + ADMIN_MENU_MAX + "): ",
+                    ADMIN_MENU_MIN, ADMIN_MENU_MAX);
+            switch (choice) {
+                case 1 -> handleAddRoom();
+                case 2 -> handleUpdateRoom();
+                case 3 -> handleRemoveRoom();
+                case 4 -> handleViewAllRooms();
+                case 5 -> handleChangeRoomStatus();
+                case 6 -> {
+                    System.out.println("\n" + DIVIDER);
+                    System.out.println("[SUCCESS] Admin logged out successfully.");
+                    System.out.println(DIVIDER);
+                    pause();
+                    inAdmin = false;
+                }
+            }
+        }
+    }
+
+    private void displayAdminMenu() {
+        System.out.println("\n" + BANNER_BORDER);
+        System.out.println("                               ADMINISTRATOR MENU                               ");
+        System.out.println(BANNER_BORDER);
+        System.out.println(" [1] Add Room");
+        System.out.println(" [2] Update Room");
+        System.out.println(" [3] Remove Room");
+        System.out.println(" [4] View All Rooms");
+        System.out.println(" [5] Change Room Status");
+        System.out.println(" [6] Logout");
+        System.out.println(DIVIDER);
+    }
+
+    private void handleAddRoom() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                                [ ADD NEW ROOM ]                                ");
+        System.out.println(DIVIDER);
+        String roomId = E195569ConsoleReader.readString("Enter Room ID (e.g., R109): ");
+        E195569RoomType roomType = E195569ConsoleReader.readRoomType("Select Room Category:");
+        E195569BedType bedType = E195569ConsoleReader.readBedType("Select Bed Type:");
+        System.out.println(DIVIDER);
+        try {
+            E195569Room room = new E195569Room(roomId, roomType, bedType, E195569RoomStatus.AVAILABLE);
+            roomService.addRoom(room);
+            System.out.println("[SUCCESS] Room " + roomId + " added successfully.");
+        } catch (E195569BookingException | IllegalArgumentException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleUpdateRoom() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                                [ UPDATE ROOM ]                                 ");
+        System.out.println(DIVIDER);
+        String roomId = E195569ConsoleReader.readString("Enter Room ID to update: ");
+        try {
+            roomService.findById(roomId);
+            E195569RoomType roomType = E195569ConsoleReader.readRoomType("Select New Room Category:");
+            E195569BedType bedType = E195569ConsoleReader.readBedType("Select New Bed Type:");
+            E195569RoomStatus status = promptRoomStatus();
+            System.out.println(DIVIDER);
+            roomService.updateRoom(roomId, roomType, bedType, status);
+            System.out.println("[SUCCESS] Room " + roomId + " updated successfully.");
+        } catch (E195569BookingException | IllegalArgumentException e) {
+            System.out.println(DIVIDER);
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleRemoveRoom() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                                [ REMOVE ROOM ]                                 ");
+        System.out.println(DIVIDER);
+        String roomId = E195569ConsoleReader.readString("Enter Room ID to remove: ");
+        System.out.println(DIVIDER);
+        try {
+            roomService.removeRoom(roomId);
+            System.out.println("[SUCCESS] Room " + roomId + " removed successfully from inventory.");
+        } catch (E195569BookingException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleViewAllRooms() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                             [ ALL ROOMS INVENTORY ]                            ");
+        System.out.println(DIVIDER);
+        List<E195569Room> rooms = roomService.getAllRooms();
+        if (rooms.isEmpty()) {
+            System.out.println("[ERROR] No rooms registered in the system.");
+        } else {
+            printRoomsTable(rooms);
+            System.out.println("[SUCCESS] Total rooms in catalog: " + rooms.size());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleChangeRoomStatus() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                             [ CHANGE ROOM STATUS ]                             ");
+        System.out.println(DIVIDER);
+        String roomId = E195569ConsoleReader.readString("Enter Room ID: ");
+        try {
+            roomService.findById(roomId);
+            E195569RoomStatus newStatus = promptRoomStatus();
+            System.out.println(DIVIDER);
+            roomService.updateStatus(roomId, newStatus);
+            System.out.println("[SUCCESS] Room " + roomId + " status updated to " + newStatus.getDisplayName() + ".");
+        } catch (E195569BookingException | IllegalArgumentException e) {
+            System.out.println(DIVIDER);
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private E195569RoomStatus promptRoomStatus() {
+        System.out.println("Select Room Status:");
+        E195569RoomStatus[] statuses = E195569RoomStatus.values();
+        for (int i = 0; i < statuses.length; i++) {
+            System.out.printf("  [%d] %s%n", (i + 1), statuses[i].getDisplayName());
+        }
+        int choice = E195569ConsoleReader.readInt("Select status (1-" + statuses.length + "): ", 1, statuses.length);
+        return statuses[choice - 1];
+    }
+
+    // =========================================================================
+    // GUEST WORKFLOW
+    // =========================================================================
+
+    private void handleGuestFlow() {
+        boolean inGuest = true;
+        while (inGuest) {
+            displayGuestMenu();
+            int choice = E195569ConsoleReader.readInt("Enter selection (" + GUEST_MENU_MIN + "-" + GUEST_MENU_MAX + "): ",
+                    GUEST_MENU_MIN, GUEST_MENU_MAX);
+            switch (choice) {
+                case 1 -> handleRegisterGuest();
+                case 2 -> handleSearchAvailableRooms();
+                case 3 -> handleMakeReservation();
+                case 4 -> handleSearchReservations();
+                case 5 -> handleViewReservationsByCheckInDate();
+                case 6 -> handleCancelReservation();
+                case 7 -> handleViewInvoiceByBookingId();
+                case 8 -> inGuest = false;
+            }
+        }
+    }
+
+    private void displayGuestMenu() {
+        System.out.println("\n" + BANNER_BORDER);
+        System.out.println("                                   GUEST MENU                                   ");
+        System.out.println(BANNER_BORDER);
+        System.out.println(" [1] Register Guest");
+        System.out.println(" [2] Search Available Rooms by Type and Dates");
+        System.out.println(" [3] Make a Reservation");
+        System.out.println(" [4] Search Reservations by Guest Name or Booking ID");
+        System.out.println(" [5] View Reservations by Check-In Date");
+        System.out.println(" [6] Cancel a Reservation");
+        System.out.println(" [7] View Invoice by Booking ID");
+        System.out.println(" [8] Back to Main Menu");
+        System.out.println(DIVIDER);
+    }
+
+    private void handleRegisterGuest() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                              [ GUEST REGISTRATION ]                            ");
+        System.out.println(DIVIDER);
+        String nic = E195569ConsoleReader.readString("Enter NIC or Passport Number: ");
+        String name = E195569ConsoleReader.readString("Enter Full Name: ");
+        String phone = E195569ConsoleReader.readPhoneNumber("Enter Contact Number: ");
+        String email = E195569ConsoleReader.readEmail("Enter Email Address: ");
+        System.out.println(DIVIDER);
+        try {
+            E195569Guest guest = guestService.registerGuest(nic, name, phone, email);
+            System.out.println("[SUCCESS] Guest successfully registered: " + guest.getDetails());
+        } catch (E195569BookingException | IllegalArgumentException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleSearchAvailableRooms() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                    [ SEARCH AVAILABLE ROOMS BY TYPE & DATES ]                  ");
+        System.out.println(DIVIDER);
+        E195569RoomType roomType = E195569ConsoleReader.readRoomType("Select Room Category:");
+        LocalDate checkIn = E195569ConsoleReader.readDate("Enter Check-in Date");
+        LocalDate checkOut = E195569ConsoleReader.readDate("Enter Check-out Date");
+        System.out.println(DIVIDER);
+        try {
+            List<E195569Room> available = bookingService.searchAvailableRooms(roomType, checkIn, checkOut);
+            if (available.isEmpty()) {
+                System.out.println("[ERROR] No available " + roomType.getDisplayName() + " rooms between " + checkIn + " and " + checkOut + ".");
+            } else {
+                System.out.println("Available " + roomType.getDisplayName() + " Rooms (" + checkIn + " to " + checkOut + "):");
+                printRoomsTable(available);
+                System.out.println("[SUCCESS] Found " + available.size() + " available room(s).");
+            }
+        } catch (E195569BookingException | IllegalArgumentException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleMakeReservation() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                              [ MAKE RESERVATION ]                              ");
+        System.out.println(DIVIDER);
+        String nic = E195569ConsoleReader.readString("Enter Guest NIC/Passport: ");
+        E195569RoomType roomType = E195569ConsoleReader.readRoomType("Select Room Category:");
+        int guests = E195569ConsoleReader.readInt("Enter Total Number of Guests (" + MIN_GUESTS + "-" + MAX_GUESTS + "): ",
+                MIN_GUESTS, MAX_GUESTS);
+        LocalDate checkIn = E195569ConsoleReader.readDate("Enter Check-in Date");
+        LocalDate checkOut = E195569ConsoleReader.readDate("Enter Check-out Date");
+        System.out.println(DIVIDER);
+        try {
+            E195569Booking booking = bookingService.createBooking(nic, roomType, guests, checkIn, checkOut);
+            System.out.println("[SUCCESS] Reservation Confirmed Successfully!");
+            System.out.println("Booking ID    : " + booking.getBookingId());
+            System.out.println("Room Assigned : #" + booking.getRoom().getRoomId() + " (" + booking.getRoom().getRoomType().getDisplayName() + ")");
+            System.out.println();
+            E195569Invoice invoice = invoiceCalculator.calculate(booking);
+            invoice.print();
+        } catch (E195569BookingException | IllegalArgumentException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleSearchReservations() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                             [ SEARCH RESERVATIONS ]                            ");
+        System.out.println(DIVIDER);
+        System.out.println("Search By:");
+        System.out.println(" [1] Booking ID");
+        System.out.println(" [2] Guest Name");
+        int choice = E195569ConsoleReader.readInt("Enter choice (" + SEARCH_CHOICE_MIN + "-" + SEARCH_CHOICE_MAX + "): ",
+                SEARCH_CHOICE_MIN, SEARCH_CHOICE_MAX);
+        System.out.println(DIVIDER);
+        if (choice == 1) {
+            String id = E195569ConsoleReader.readString("Enter Booking ID: ");
+            System.out.println(DIVIDER);
+            try {
+                E195569Booking booking = bookingService.searchByBookingId(id);
+                printBookingsTable(List.of(booking));
+                System.out.println("[SUCCESS] Reservation located successfully for ID: " + id);
+            } catch (E195569BookingException e) {
+                System.out.println("[ERROR] " + e.getMessage());
+            }
+        } else {
+            String name = E195569ConsoleReader.readString("Enter Guest Name (full or partial): ");
+            System.out.println(DIVIDER);
+            List<E195569Booking> results = bookingService.searchByGuestName(name);
+            if (results.isEmpty()) {
+                System.out.println("[ERROR] No reservations found matching guest name: '" + name + "'.");
+            } else {
+                printBookingsTable(results);
+                System.out.println("[SUCCESS] Found " + results.size() + " matching reservation(s).");
+            }
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleViewReservationsByCheckInDate() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                   [ RESERVATIONS (SORTED BY CHECK-IN DATE) ]                   ");
+        System.out.println(DIVIDER);
+        List<E195569Booking> bookings = bookingService.viewByCheckInDate();
+        if (bookings.isEmpty()) {
+            System.out.println("[ERROR] No reservations found in the system.");
+        } else {
+            printBookingsTable(bookings);
+            System.out.println("[SUCCESS] Total reservations displayed: " + bookings.size());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleCancelReservation() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                             [ CANCEL RESERVATION ]                             ");
+        System.out.println(DIVIDER);
+        System.out.println("Note: Cancellations within 24 hours of check-in at 00:00 are strictly non-permitted.");
+        String bookingId = E195569ConsoleReader.readString("Enter Booking ID to cancel: ");
+        System.out.println(DIVIDER);
+        try {
+            E195569Booking cancelled = bookingService.cancelBooking(bookingId);
+            System.out.println("[SUCCESS] Booking " + cancelled.getBookingId() + " has been successfully CANCELLED.");
+            System.out.printf("[SUCCESS] Refundable advance of LKR %,.2f released to guest.%n", cancelled.getAdvancePaid());
+        } catch (E195569BookingException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    private void handleViewInvoiceByBookingId() {
+        System.out.println("\n" + DIVIDER);
+        System.out.println("                            [ VIEW BOOKING INVOICE ]                            ");
+        System.out.println(DIVIDER);
+        String bookingId = E195569ConsoleReader.readString("Enter Booking ID: ");
+        System.out.println(DIVIDER);
+        try {
+            E195569Invoice invoice = bookingService.generateInvoice(bookingId);
+            invoice.print();
+            System.out.println("[SUCCESS] Invoice displayed successfully for Booking ID: " + bookingId);
+        } catch (E195569BookingException e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+        System.out.println(DIVIDER);
+        pause();
+    }
+
+    // =========================================================================
+    // PRESENTATION & TABLE FORMATTING HELPERS
+    // =========================================================================
+
+    private void printRoomsTable(List<E195569Room> rooms) {
+        System.out.println("+----------+----------------+--------------+--------------------+---------------+");
+        System.out.println("| Room ID  | Category       | Bed Type     | Current Status     | Daily Rate    |");
+        System.out.println("+----------+----------------+--------------+--------------------+---------------+");
+        for (E195569Room r : rooms) {
+            System.out.println(r);
+        }
+        System.out.println("+----------+----------------+--------------+--------------------+---------------+");
+    }
+
+    private void printBookingsTable(List<E195569Booking> bookings) {
+        System.out.println("+-----------+---------+------------------+------------+------------+-------------+-------------+---------------+-----------+");
+        System.out.println("| BookingID | Room ID | Guest Name       | Check-In   | Check-Out  | Duration    | Guests      | Advance Paid  | Status    |");
+        System.out.println("+-----------+---------+------------------+------------+------------+-------------+-------------+---------------+-----------+");
+        for (E195569Booking b : bookings) {
+            System.out.println(b);
+        }
+        System.out.println("+-----------+---------+------------------+------------+------------+-------------+-------------+---------------+-----------+");
+    }
+
+    private void pause() {
+        E195569ConsoleReader.pause();
+    }
+}
+
+==================================================
+FILE: E195569Main.java
+==================================================
+import java.util.ArrayList;
+import java.util.List;
+import model.E195569Admin;
+import service.E195569BookingService;
+import service.E195569GuestService;
+import service.E195569InvoiceCalculator;
+import service.E195569RoomService;
+import ui.E195569ConsoleMenu;
+import util.E195569DataSeeder;
+
+/**
+ * Main application entry point for the SmartStay Hotel Booking System.
+ * Solely responsible for initializing service instances, seeding baseline demonstration data,
+ * and transferring control to the console user interface.
+ */
+public class E195569Main {
+
+    /**
+     * Application execution entry point.
+     *
+     * @param args Command-line arguments (unused).
+     */
+    public static void main(String[] args) {
+        // 1. Initialize Core Business Services
+        E195569RoomService roomService = new E195569RoomService();
+        E195569GuestService guestService = new E195569GuestService();
+        E195569InvoiceCalculator invoiceCalculator = new E195569InvoiceCalculator();
+        E195569BookingService bookingService = new E195569BookingService(roomService, guestService, invoiceCalculator);
+
+        // Administrator credentials store
+        List<E195569Admin> admins = new ArrayList<>();
+
+        // 2. Populate Baseline Seed Data
+        E195569DataSeeder.seed(roomService, guestService, admins);
+
+        // 3. Launch Console User Interface
+        E195569ConsoleMenu consoleMenu = new E195569ConsoleMenu(
+                roomService, guestService, bookingService, invoiceCalculator, admins
+        );
+        consoleMenu.start();
+    }
+}
+
